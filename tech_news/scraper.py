@@ -2,6 +2,7 @@ import requests
 import time
 from parsel import Selector
 import re
+from tech_news.database import create_news
 
 
 # Requisito 1
@@ -45,7 +46,7 @@ def scrape_news(html_content):
     timestamp = selector.css(".meta-date::text").get()
     writer = selector.css(".author a::text").get()
     reading_time = int(
-        selector.css(".meta-reading-time::text").get().split(' ')[0]
+        selector.css(".meta-reading-time::text").get().split(" ")[0]
     )
     summary = selector.css(".entry-content p").get()
     summary = re.sub("<.*?>", "", summary).strip()
@@ -63,5 +64,16 @@ def scrape_news(html_content):
 
 # Requisito 5
 def get_tech_news(amount):
-    """Seu código deve vir aqui"""
-    raise NotImplementedError
+    list_news = []
+    url = "https://blog.betrybe.com/"
+    while len(list_news) < amount:
+        response = fetch(url)
+        updates = scrape_updates(response)
+        list_news.extend(updates)
+        url = scrape_next_page_link(response)
+    arr_list_news = []
+    for news in list_news[:amount]:
+        scrap_news = scrape_news(fetch(news))
+        arr_list_news.append(scrap_news)
+    create_news(arr_list_news)
+    return arr_list_news[:amount]
